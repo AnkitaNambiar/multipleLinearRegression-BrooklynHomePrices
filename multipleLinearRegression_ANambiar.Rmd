@@ -1,0 +1,346 @@
+---
+title: "Multiple Linear Regression Model: Brooklyn Home Prices 2016-2020"
+author: "ANambiar"
+date: "2023-01-24"
+output: html_document
+runtime: shiny
+---
+
+## Part 1: Analyze 2016-2020 Brooklyn Home Prices
+
+## Step 1: Import and prepare the data for analysis
+
+#1.1 Bring the data into R 
+
+```{r}
+library(dplyr)
+
+#load data
+data2016 <- read.csv('/Users/ankitanambiar/Desktop/2022-2023 school/Fall 2022/Statistical Analysis/stats final/2016_brooklyn.csv', header = T, skip = 4, fill=TRUE)
+head(data2016)
+data2017 <- read.csv('/Users/ankitanambiar/Desktop/2022-2023 school/Fall 2022/Statistical Analysis/stats final/2017_brooklyn.csv', header = T, skip = 4, fill=TRUE)
+head(data2017)
+data2018 <- read.csv('/Users/ankitanambiar/Desktop/2022-2023 school/Fall 2022/Statistical Analysis/stats final/2018_brooklyn.csv', header = T, skip = 4, fill=TRUE)
+head(data2018)
+data2019 <- read.csv('/Users/ankitanambiar/Desktop/2022-2023 school/Fall 2022/Statistical Analysis/stats final/2019_brooklyn.csv', header = T, skip = 4, fill=TRUE)
+head(data2018)
+data2020 <- read.csv('/Users/ankitanambiar/Desktop/2022-2023 school/Fall 2022/Statistical Analysis/stats final/2020_brooklyn.csv', header = T, skip = 6, fill=TRUE)
+data2020 <- data2020[-c(1),]
+head(data2020)
+
+# change column names
+# change data types for DATE
+colnames(data2016)=c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+data2016$date <- as.Date(data2016$date, "%m/%d/%Y")
+
+colnames(data2017)=c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+data2017$date <- as.Date(data2017$date, "%m/%d/%y")
+
+colnames(data2018)=c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+data2018$date <- as.Date(data2018$date, "%m/%d/%y")
+
+colnames(data2019)=c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+data2019$date <- as.Date(data2019$date, "%m/%d/%y")
+
+colnames(data2020)=c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+data2020$date <- as.Date(data2020$date, "%m/%d/%y")
+```
+
+## 1.2 Join the data and make it usable for analysis
+
+```{r}
+# bind
+allyearsdata <- rbind(data2016, data2017, data2018, data2019, data2020)
+#allyearsdata
+# 119304 rows
+
+# pay attention to white space and special characters
+library(stringr)
+allyearsdata$bldclasscat <- str_squish(allyearsdata$bldclasscat)
+allyearsdata$bldclasssale <- str_squish(allyearsdata$bldclasssale)
+allyearsdata$neighborhood <- str_squish(allyearsdata$neighborhood)
+allyearsdata$address <- str_squish(allyearsdata$address)
+allyearsdata$price <- str_squish(allyearsdata$price)
+allyearsdata$grosssqft <- str_squish(allyearsdata$grosssqft)
+
+# change data types
+# pay attention to white space and special characters
+class(allyearsdata$resunits) = "numeric"
+class(allyearsdata$comunits) = "numeric"
+class(allyearsdata$totunits) = "numeric"
+class(allyearsdata$zip) = "character"
+
+allyearsdata$landsqft <- gsub(",", "", allyearsdata$landsqft)  
+class(allyearsdata$landsqft) = "numeric"
+
+allyearsdata$grosssqft <- gsub(",", "", allyearsdata$grosssqft)  
+class(allyearsdata$grosssqft) = "numeric"
+
+allyearsdata$price <- gsub(",", "", allyearsdata$price)  
+allyearsdata$price <- gsub("\\$", "", allyearsdata$price) 
+allyearsdata$price <- str_squish(allyearsdata$price)
+#plot(allyearsdata$date, allyearsdata$price)
+class(allyearsdata$price) = "numeric"
+
+str(allyearsdata)
+#allyearsdata
+#119304
+```
+
+##  1.3 Filter the data and make transformations specific to this analysis
+
+```{r}
+allyearsdata<- filter(allyearsdata, allyearsdata$bldclasssale %in%  c("A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "RA", "RB", " RG", "RH", "RK", "RP", "RR", "RS", "RT", "RW", "R0", "R1", "R2","R3","R4","R5", "R6", "R7", "R8", "R9"))
+#allyearsdata
+#41910
+
+allyearsdata<-allyearsdata[allyearsdata$totunits==1, ]
+allyearsdata<-allyearsdata[allyearsdata$resunits==1, ]
+#allyearsdata
+#38850
+
+allyearsdata<-allyearsdata[!is.na(allyearsdata$grosssqft), ]
+# allyearsdata %>% filter(!is.na(allyearsdata$grosssqft))
+allyearsdata<-allyearsdata[allyearsdata$grosssqft>0, ]
+#allyearsdata
+#20774
+
+allyearsdata<-allyearsdata[!is.na(allyearsdata$price), ]
+# allyearsdata %>% filter(!is.na(allyearsdata$price))
+#allyearsdata
+#19593
+```
+
+## Step 2: EDA and feature engineering
+
+## 2.1 Exploratory data analysis 
+
+```{r}
+#allyearsdata$price
+plot(allyearsdata$date, allyearsdata$price)
+plot(allyearsdata$zip, allyearsdata$price)
+# revisited data cleaning steps
+# made zip code a character type
+# unique(allyearsdata$neighborhood)
+# many neighborhood categories, consider finding similarities 
+```
+
+## 2.2 Pre-modeling and feature engineering 
+
+```{r}
+# outliers in price
+allyearsdata <- allyearsdata[allyearsdata$price>6000, ]
+allyearsdata <- allyearsdata[allyearsdata$price<6000000, ]
+#allyearsdata
+#13488 rows of data
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "SHEEPSHEAD BAY"] <- "SHEEPSHEAD_BAY_AND_BERGEN_BEACH"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "BERGEN BEACH"] <- "SHEEPSHEAD_BAY_AND_BERGEN_BEACH"
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "WILLIAMSBURG-SOUTH"] <- "WILLIAMSBURG-SOUTH_AND_WINDSOR_TERRACE"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "WINDSOR TERRACE"] <- "WILLIAMSBURG-SOUTH_AND_WINDSOR_TERRACE"
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "BUSHWICK"] <- "BUSHWICK_AND_BOROUGH PARK_AND_SUNSET PARK"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "BOROUGH PARK"] <- "BUSHWICK_AND_BOROUGH PARK_AND_SUNSET PARK"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "SUNSET PARK"] <- "BUSHWICK_AND_BOROUGH PARK_AND_SUNSET PARK"
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "DYKER HEIGHTS"] <- "DYKER _HEIGHTS_AND_WYCKOFF_HEIGHTS"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "WYCKOFF HEIGHTS"] <- "DYKER _HEIGHTS_AND_WYCKOFF_HEIGHTS"
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "WILLIAMSBURG-CENTRAL"] <- "WILLIAMSBURG-CENTRAL_AND_FLATBUSH-NORTH"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "FLATBUSH-NORTH"] <- "WILLIAMSBURG-CENTRAL_AND_FLATBUSH-NORTH"
+#16017
+#155981
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "OLD MILL BASIN"] <- "OLD MILL BASIN_AND_CONEY ISLAND"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "CONEY ISLAND"] <- "OLD MILL BASIN_AND_CONEY ISLAND"
+#-218274 
+#-218413 
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "KENSINGTON"] <- "KENSINGTON_AND_FLATBUSH-CENTRAL"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "FLATBUSH-CENTRAL"] <- "KENSINGTON_AND_FLATBUSH-CENTRAL"
+#RMSE went up a little
+#460595
+#442170
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "CYPRESS HILLS"] <- "CYPRESS HILLS_AND_GERRITSEN BACH"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "GERRITSEN BACH"] <- "CYPRESS HILLS_AND_GERRITSEN BACH"
+#-254821
+#-268848
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "FLATLANDS"] <- "FLATLANDS_AND_SPRING_CREEK"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "SPRING CREEK"] <- "FLATLANDS_AND_SPRING_CREEK"
+#-223755 
+#-238587
+
+allyearsdata$neighborhood[allyearsdata$neighborhood == "DOWNTOWN-FULTON FERRY"] <- "DOWNTOWN-FULTON_FERRY_AND_PARK_SLOPE"
+allyearsdata$neighborhood[allyearsdata$neighborhood == "PARK SLOPE"] <- "DOWNTOWN-FULTON_FERRY_AND_PARK_SLOPE"
+#1298791
+#1300480
+
+# check neighborhood rows
+# unique(allyearsdata$neighborhood)
+ #unique(data2019$neighborhood)
+
+# model testing
+#lm1 <- lm(price ~ grosssqft +neighborhood, data = allyearsdata)
+#lm2 <- lm(price ~ grosssqft +landsqft + yrbuilt +block +neighborhood, data = allyearsdata)
+#lm4 <- lm(price ~ grosssqft +landsqft + yrbuilt +block +zip, data = allyearsdata)
+#lm5 <- lm(price ~ grosssqft +zip +block, data = allyearsdata)
+#lm6 <- lm(price ~ grosssqft +landsqft + zip + yrbuilt +block +neighborhood, data = allyearsdata)
+```
+
+## 2.3 Reach a stopping point
+
+```{r}
+# finalized model
+lm0 <- lm(price ~ sqrt(grosssqft) + neighborhood, data = allyearsdata)
+summary(lm0)
+#0.6146 = R^2
+#445100 = RMSE
+#50 = df
+#meets conditions 
+
+saveRDS(list(model=lm0, data=allyearsdata), file='ankitanambiar.RDS') 
+```
+
+## Part 2: Analyze 2020 Q3 to Q4 shift
+
+## 1.1 Prepare Data
+
+```{r}
+library(lubridate)
+library(dplyr)
+data2020 <- allyearsdata
+#data2020
+
+data2020 <- data2020 %>%
+  mutate(month = format(date,"%m")) 
+class(data2020$month) = "numeric"
+str(data2020)
+#data2020
+
+data2020 <- data2020 %>%
+  mutate(quarter = case_when(month >6 & month <10  ~ "3",
+                             month  >9 & month  <13  ~ "4")) %>%
+  filter(year(ymd(date)) == "2020") %>%
+  filter(quarter %in% c("3", "4"))
+
+class(data2020$quarter) = "character"
+```
+
+## 1.2 Exploratory Analysis
+
+```{r}
+#box plot
+library(ggplot2) 
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+ggplot(data2020, aes(quarter, price)) +
+  geom_boxplot() + ggtitle("Brooklyn Home Prices for 2020 Q3 and 2020 Q4")  
+
+#histogram
+p1 <- ggplot(data2020, aes(price)) +
+  geom_histogram(fill = "white", color = "grey30") +
+  facet_wrap(~ quarter) + ggtitle("Brooklyn Home Price Distribution for Q3 and Q4 in 2020")
+p1
+
+#finding means of q3 and q4
+library(ggplot2) 
+library(dplyr)
+data2020 %>%
+  group_by(quarter) %>%
+  summarise(avg_price = mean(price))
+summary(data2020 %>% filter(quarter == 3) %>% .$quarter)
+summary(data2020 %>% filter(quarter == 4) %>% .$price)
+#3  1011666
+#4  1088537
+
+#t test
+t.test(data2020$price[data2020$quarter == '3'], data2020$price[data2020$quarter == '4'])
+# fail to reject null that true difference in means between group 3 and group 4 is equal to 0
+# cannot accept that there is statistical difference between the two means
+#t.test(log(price) ~ quarter, data = data2020
+# significant difference 
+# log for not normal data
+```
+
+## 1.3 Model Creation for Q3 to Q4 Shift
+
+```{r}
+lm2 <- lm(price ~ quarter + sqrt(grosssqft) + neighborhood, data = data2020)
+summary(lm2)
+```
+
+Model Creation Explanation: 
+
+To answer if Brooklyn home purchase prices changed between Quarter 3 (Q3) and Quarter 4 (Q4) in 2020, I have created a price predictor model to analyze the Q3 to Q4 shift. My Brooklyn home price predictor model for this business case originated from a previous Brooklyn home price predictor model I created from data on real estate purchases within the borough of Brooklyn from 2016-2020. My previous model met all the conditions for predictive accuracy, so I decided to include the 2 predictor variables I had in my new model: gross square feet and neighborhood. Along with the predictor variables, I used the same filters that worked for my previous model, ex: only prices between $6K to $6M. I kept only 2020 data in Q3 and Q4 since those are the periods we are focusing on. I then created a new column for Quarter in the dataset, made it a ‘character’ type, and added it as a categorical variable into my price predictor model.
+
+The final Brooklyn home price predictor model uses the following 3 predictors: gross square feet, neighborhood, and quarter. The regression output for this model has promising qualities. The residual standard error (RMSE) was 443400, the multiple R-squared is 0.7219, and has 39 degrees of freedom. These values show that the Brooklyn home price predictor model for Q3 and Q4 of 2020 has high predictive accuracy, so we can feel confident in the model’s predictive power and proceed in using it to answer if Brooklyn home purchase prices changed between Q3 2020 and Q4 2020.
+
+## 1.4 Q3 to Q4 Shift Analysis with Gross Square Feet
+
+```{r}
+ggplot(data2020, aes(x=grosssqft, y=price, color=quarter)) + geom_point() +
+  stat_smooth(method = "lm",
+              formula = y ~ x,
+              geom = "smooth")  + ggtitle("Brooklyn Home Price based on Gross Square Feet for 2020 Q3 to 2020 Q4")                                   
+```
+
+Gross Square Feet Analysis:
+
+For the predictor variable gross square feet, I found gross square feet had a significant relation with price, with a p-value of < 2e-16.
+  
+I then created the "Brooklyn Home Price based on Gross Square Feet for 2020 Q3 to 2020 Q4” plot, below. The graph shows how price increases with greater square feet, which is expected. More importantly, when comparing the linear regression lines of Q3 and Q4, we see that Q4 homes were sold at higher prices than Q3 for the same square feet. The difference in price between the quarters is present for all square feet but gets larger as square feet increases, seen in the not parallel linear regression lines of Q4 and Q3. At 2000 square feet, there is an approximate $100k increase from Q3 to Q4, while, at 6000 square feet, there is an approximate $400k increase. There is an effect of quarter and square feet on price, signaling that square feet is important to consider for the price change between 2020 Q3 to 2020 Q4.
+
+## 1.4 Q3 to Q4 Shift Analysis with Neighborhood
+
+```{r}
+#plot, with 5 most significant neighborhoods
+#filter significant neighborhoods
+filtered_neighborhood_data <- filter(data2020, neighborhood=="BROOKLYN HEIGHTS" |neighborhood=="DOWNTOWN-FULTON_FERRY_AND_PARK_SLOPE"
+                                     |neighborhood=="OCEAN PARKWAY-SOUTH" |neighborhood=="WILLIAMSBURG-NORTH")
+filtered_neighborhood_data
+#plot
+ggplot(filtered_neighborhood_data, aes(x=neighborhood, y=price, fill=quarter)) + geom_boxplot() + ggtitle("Home Prices for Neighborhoods, 2020 Q3 to Q4")+ theme(axis.title = element_text(size = 16),axis.text = element_text(size= 5, color = "black"))
+
+
+lmnew <- lm(price ~ quarter + grosssqft + neighborhood, data = data2020)
+summary(lmnew)
+confint(lmnew)
+```
+
+Neighborhood Analysis:
+
+For the predictor variable neighborhood, I determined the neighborhoods that have the most significant relation with price, as those with the smallest p value which were < 2e-16. Overall, 27 neighborhoods had a significant relation with price, however, I decided to stick with the 5 most significant for simplicity: Brooklyn Heights, Downtown Fulton Ferry, Park Slope, South Ocean Parkway, and North Williamsburg.
+
+For the 5 most significant neighborhoods, I plotted the box plot “Brooklyn Home Prices for Neighborhoods with Significant Price Relations from 2020 Q3 to 2020 Q4,” below. As seen in the graph, from Q3 to Q4, home prices in Brooklyn Heights and South Ocean Parkway dropped. However, home prices in Downtown Fulton Ferry, Park Slope, and North Williamsburg increased. For Brooklyn Height, there was an approximate $3.1M price drop while, in North Williamsburg, there was an approximate $800k increase. This shows an effect of quarter and neighborhood on price, meaning neighborhood is important to consider for the price change between 2020 Q3 to 2020 Q4.
+
+## 1.5 Check Assumptions for Linear Regression
+
+```{r}
+library(car)
+durbinWatsonTest(lmnew)
+
+library(ggplot2)
+#plot(lmnew, which = 1)
+#not linear -->
+#plot(lmnew$fitted.values, lmnew$model$BMI)
+#hist(lmnew$residuals)
+plot(lmnew, which=2)
+par(mfrow=c(2,2))
+plot(lmnew)
+```
+
+Assumption Analysis:
+
+My price predictor model, as stated, uses linear regression to explain Brooklyn housing prices, so I checked whether the assumptions made by the linear regression model are met or not. First, I checked the linearity of the data with a Residual vs Fitted Plot, below. There is a clear pattern in the points, so the assumption that there is a linear relationship between price and the predictor variables is not met. Second, I tested the homoscedasticity with a scale-location plot, below. In the scale-location plot, the points are not equally spread, so there is a heteroscedasticity problem and we do not meet the homoscedasticity assumption.
+  
+Third, I checked the normality of the residuals with a QQ plot of the residuals, above. In the QQ plot, the majority of the points fall approximately along the reference line, so the normality assumption is met. However, there are deviating endpoints, which suggest a skewed distribution. Fourth, I checked that the predictors are independent using the Durbin-Watson test. I found a p-value of 0, so we conclude that the residuals in this regression model are autocorrelated and fail to meet our independence assumption. Fifth, I tested the independence of errors with a Residual vs Fitted Plot, above. In the plot, there is a slight correlation, so the independence of errors is not met. Overall, the majority of the Ordinary Least Squares (OLS) assumptions are not met, meaning that remodeling is necessary. A possible remodeling step is using a logistic transformation on price.
+
+## 1.6 Conclusion for Q3 to Q4 Shift
+
+With my price predictor model, I found that Brooklyn home purchase prices significantly changed between Q3 2020 and Q4 2020 with an additive increase of $80,877.71 from Q3 2020 and Q4 2020. This was supported by the increase in price for all square footage from Q3 to Q4. However, we cannot apply this insight to all of Brooklyn because while overall Brooklyn home purchase prices increased, in certain neighborhoods there was a price decrease. Neighborhood should be accounted for to determine the price change between Q3 2020 and Q4 2020. Furthermore, the model did not meet all the OLS assumptions, so the results found should not be fully trusted and used for business decisions. The next steps include remodeling and considering a non-linear regression model to determine if Brooklyn home purchase prices significantly changed between Q3 2020 and Q4 2020.
+
