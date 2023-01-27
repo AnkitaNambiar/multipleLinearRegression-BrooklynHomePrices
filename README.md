@@ -1,5 +1,7 @@
 # multipleLinearRegression-BrooklynHomePrices
 
+# Do Not Duplicate. 
+
 # Model Creation
 
 To answer if Brooklyn home purchase prices changed between Quarter 3 (Q3) and Quarter 4 (Q4) in 2020, I created a price predictor model to analyze the Q3 to Q4 shift. My Brooklyn home price predictor model for this business case originated from a previous Brooklyn home price predictor model I created from data on real estate purchases within the borough of Brooklyn from 2016-2020. My previous model met all the conditions for predictive accuracy, so I decided to include the 2 predictor variables I had in my new model: gross square feet and neighborhood. Along with the predictor variables, I used the same filters that worked for my previous model, ex: only prices between $6K to $6M. I kept only 2020 data in Q3 and Q4 since those are the periods we are focusing on. I then created a new column for Quarter in the dataset, made it a ‘character’ type, and added it as a categorical variable into my price predictor model.
